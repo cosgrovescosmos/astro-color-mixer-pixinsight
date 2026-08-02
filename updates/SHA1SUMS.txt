@@ -1,2 +1,2 @@
 3a03a72b5130b058593eacb27a3329c58141b9dc  AstroColorMixer-0.9.7.14-beta.zip
-bc8f3e90d7a3870e2d9bb8b8b1bb80e70d504a53  AstroContrastEnhancer-0.9.599.zip
+5c188b2f10d9812e4cac1f1f0602e950bf11e8ba  AstroContrastEnhancer-0.9.600.zip

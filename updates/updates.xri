@@ -28,18 +28,18 @@
     </package>
 
     <package
-      fileName="AstroContrastEnhancer-0.9.599.zip"
-      sha1="bc8f3e90d7a3870e2d9bb8b8b1bb80e70d504a53"
+      fileName="AstroContrastEnhancer-0.9.600.zip"
+      sha1="5c188b2f10d9812e4cac1f1f0602e950bf11e8ba"
       type="script"
       releaseDate="20260802">
 
-      <title>Astro Contrast Enhancer v0.9.599</title>
+      <title>Astro Contrast Enhancer v0.9.600</title>
 
       <description>
         <p>Astro Contrast Enhancer provides protected Texture, Clarity, Dehaze, and lasso-based local contrast control for stretched astrophotography images.</p>
-        <p><b>What's new:</b> Removes an unintended advanced texture model selector from the public interface. The product texture algorithm is unchanged.</p>
+        <p><b>What's new:</b> Fixes low-zoom preview refresh and Before/After state handling after rapid queued slider changes.</p>
         <p>This release includes the Cosgrove's Cosmos Non-Commercial Source License. Personal, educational, research, and other non-commercial use is permitted with attribution. Commercial use requires prior written permission from Patrick A. Cosgrove.</p>
-        <p>This release changes ACE interface visibility only. It does not change PixInsight package paths, feature-id, menu placement, or icon path.</p>
+        <p>This release changes ACE state-machine behavior only. It does not change PixInsight package paths, feature-id, menu placement, or icon path.</p>
       </description>
 
     </package>
