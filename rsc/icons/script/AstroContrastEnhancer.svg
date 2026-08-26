@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="256" height="256" viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bay" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#050b12"/>
+      <stop offset="0.55" stop-color="#0b1420"/>
+      <stop offset="1" stop-color="#151d26"/>
+    </linearGradient>
+    <radialGradient id="nebula" cx="55%" cy="36%" r="70%">
+      <stop offset="0" stop-color="#2f77bf" stop-opacity="0.45"/>
+      <stop offset="0.42" stop-color="#5a46b6" stop-opacity="0.25"/>
+      <stop offset="0.78" stop-color="#d88d28" stop-opacity="0.22"/>
+      <stop offset="1" stop-color="#071018" stop-opacity="0.1"/>
+    </radialGradient>
+    <filter id="softGlow" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <rect x="12" y="12" width="232" height="232" rx="38" fill="#071018" opacity="0.6" filter="url(#softGlow)"/>
+  <rect x="13" y="13" width="230" height="230" rx="35" fill="url(#bay)" stroke="#8a742f" stroke-width="3"/>
+  <rect x="22" y="22" width="212" height="212" rx="28" fill="url(#nebula)" stroke="#365066" stroke-width="1.5" opacity="0.96"/>
+  <g opacity="0.9">
+    <g stroke="#7fb8ff" stroke-width="3" stroke-linecap="round">
+      <line x1="77" y1="46" x2="77" y2="170" filter="url(#softGlow)"/>
+      <line x1="70" y1="70" x2="84" y2="70" opacity="0.5"/>
+      <line x1="69" y1="94" x2="85" y2="94" opacity="0.5"/>
+      <line x1="70" y1="118" x2="84" y2="118" opacity="0.5"/>
+      <line x1="69" y1="142" x2="85" y2="142" opacity="0.5"/>
+    </g>
+    <g stroke="#c7b7ff" stroke-width="3" stroke-linecap="round">
+      <line x1="128" y1="46" x2="128" y2="170" filter="url(#softGlow)"/>
+      <line x1="121" y1="70" x2="135" y2="70" opacity="0.5"/>
+      <line x1="120" y1="94" x2="136" y2="94" opacity="0.5"/>
+      <line x1="121" y1="118" x2="135" y2="118" opacity="0.5"/>
+      <line x1="120" y1="142" x2="136" y2="142" opacity="0.5"/>
+    </g>
+    <g stroke="#f0c35a" stroke-width="3" stroke-linecap="round">
+      <line x1="179" y1="46" x2="179" y2="170" filter="url(#softGlow)"/>
+      <line x1="172" y1="70" x2="186" y2="70" opacity="0.5"/>
+      <line x1="171" y1="94" x2="187" y2="94" opacity="0.5"/>
+      <line x1="172" y1="118" x2="186" y2="118" opacity="0.5"/>
+      <line x1="171" y1="142" x2="187" y2="142" opacity="0.5"/>
+    </g>
+  </g>
+  <rect x="66" y="83" width="22" height="28" rx="5" fill="#eaf3ff" stroke="#7fb8ff" stroke-width="3" filter="url(#softGlow)"/>
+  <rect x="117" y="118" width="22" height="28" rx="5" fill="#eeeaff" stroke="#c7b7ff" stroke-width="3" filter="url(#softGlow)"/>
+  <rect x="168" y="101" width="22" height="28" rx="5" fill="#fff1bd" stroke="#f0c35a" stroke-width="3" filter="url(#softGlow)"/>
+  <path d="M199 50 L204 62 L216 67 L204 72 L199 84 L194 72 L182 67 L194 62 Z" fill="#fff0b8" opacity="0.95"/>
+  <g fill="none" stroke="#eef4ff" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M72 213 L87 184 L102 213"/>
+    <path d="M116 188 A20 20 0 1 0 116 209"/>
+    <path d="M152 186 L152 214 M152 187 L184 187 M152 200 L178 200 M152 213 L184 213"/>
+  </g>
+  <path d="M82 202 L95 202" stroke="#f0c35a" stroke-width="3.5" stroke-linecap="round"/>
+  <path d="M152 200 L178 200" stroke="#f0c35a" stroke-width="3.5" stroke-linecap="round"/>
+</svg>

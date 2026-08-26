@@ -13,13 +13,13 @@ throw new Error("Astro Color Mixer requires PixInsight 1.9.4 or newer.");
 
 #feature-id    AstroColorMixer : Cosgrove's Cosmos > Astro Color Mixer
 #feature-icon  @script_icons_dir/AstroColorMixer.svg
-#feature-info  Astro Color Mixer v0.9.7.14-beta. Script menu icon restore.
+#feature-info  Astro Color Mixer v0.9.7.19-beta. Zoom transition and output progress notice polish.
 
 /*
  * Astro Color Mixer for PixInsight
  *
  * Beta build:
- * Astro Color Mixer v0.9.7.14-beta
+ * Astro Color Mixer v0.9.7.19-beta
  */
 
 #include <pjsr/UndoFlag.jsh>
@@ -34,7 +34,7 @@ throw new Error("Astro Color Mixer requires PixInsight 1.9.4 or newer.");
 CoreApplication.ensureMinimumVersion( 1, 9, 4 );
 
 function showMessage(text, title, icon) {
-   (new MessageBox(text, title || "Astro Color Mixer v0.9.7.14-beta", icon || StdIcon_Information, StdButton_Ok)).execute();
+   (new MessageBox(text, title || "Astro Color Mixer v0.9.7.19-beta", icon || StdIcon_Information, StdButton_Ok)).execute();
 }
 
 var acmHelpHostDialog = null;
@@ -49,7 +49,7 @@ function showHelpTopic(title, text) {
 
 function fail(text) {
    console.criticalln(text);
-   showMessage(text, "Astro Color Mixer v0.9.7.14-beta", StdIcon_Error);
+   showMessage(text, "Astro Color Mixer v0.9.7.19-beta", StdIcon_Error);
    var error = new Error(text);
    error.__acmHandled = true;
    throw error;
@@ -630,7 +630,7 @@ function acmCreateInfoBox(parent) {
    return box;
 }
 
-console.writeln("<end><cbr><br><b>Astro Color Mixer v0.9.7.14-beta</b>");
+console.writeln("<end><cbr><br><b>Astro Color Mixer v0.9.7.19-beta</b>");
 
 // -------------------------------------------------------------------------
 // Minimal copied core logic
@@ -2205,6 +2205,28 @@ function acmClipTextToWidth(text, font, maxWidth) {
    return value.substring(0, lo) + suffix;
 }
 
+function acmWrapTextToWidth(text, font, maxWidth) {
+   var value = String(text || "");
+   if (!value || !font || maxWidth <= 0)
+      return [];
+   var words = value.split(/\s+/);
+   var lines = [];
+   var current = "";
+   for (var i = 0; i < words.length; ++i) {
+      var word = words[i];
+      var next = current ? current + " " + word : word;
+      if (current && font.width(next) > maxWidth) {
+         lines.push(current);
+         current = word;
+      } else {
+         current = next;
+      }
+   }
+   if (current)
+      lines.push(current);
+   return lines;
+}
+
 function acmConfigurePassViewerRowControl(rowControl, textInfo, dialog, hasDeleteButton, checked, passId) {
    if (!rowControl)
       return 24;
@@ -3108,11 +3130,12 @@ var ACM_TECHNICAL_APPENDIX_TEXT = [
 
 var ACM_ABOUT_TEXT =
       "About Astro Color Mixer\n\n" +
-"Astro Color Mixer v0.9.7.14-beta\n\n" +
+"Astro Color Mixer v0.9.7.19-beta\n\n" +
 "A Cosgrove's Cosmos tool for nonlinear RGB chroma-vector color control in astrophotography.\n\n" +
 "Version 2 feature highlights since v0.9.7.7-beta:\n\n" +
 "Latest Feature\n" +
-"- Added a display workspace warning for Windows and macOS systems where PixInsight reports a workspace smaller than Astro Color Mixer's layout target, including guidance for Windows Display Scaling and macOS Displays settings.\n\n" +
+"- Smoothed the Auto preview transition at 4x and higher zoom levels so the 6x preset continues zooming in instead of appearing to shrink after 4x.\n" +
+"- Replaced the lower-left full-resolution output progress warning with a centered preview notification while writes are running.\n\n" +
 "Preview / Diagnostics\n" +
 "- Added Difference preview mode to show where the current adjustment changes the image.\n" +
 "- Added Plot Info beside the polar plot with probe, selected band, Range Mask, and delayed Changed / Strong readouts.\n" +
@@ -5067,7 +5090,7 @@ constructor() {
    acmHelpHostDialog = this;
 
    var self = this;
-   this.windowTitle = "Astro Color Mixer v0.9.7.14-beta";
+   this.windowTitle = "Astro Color Mixer v0.9.7.19-beta";
    this.recipeFilePath = "";
    this.activeTab = ACM_TAB_SAT;
    this.activeToolPanel = "selectedBand";
@@ -5149,6 +5172,12 @@ constructor() {
    this.previewTempOriginal = false;
    this.previewHoldArmed = false;
    this.previewMoveThreshold = 5;
+   this.outputWaitTitle = "";
+   this.outputWaitSubtitle = "";
+   this.outputWaitDetail = "";
+   this.outputNoticeMode = "";
+   this.outputNoticeButtonRect = null;
+   this.outputNoticeClickConsumed = false;
    this.targetApplyConfirmedThisSession = false;
    this.targetApplyMaskStatus = {
       message: "Target apply: no PixInsight mask detected",
@@ -5189,6 +5218,17 @@ constructor() {
       this.previewChangeStatsTimer.dialog = this;
       this.previewChangeStatsTimer.onTimeout = function() {
          this.dialog.computeDeferredPreviewChangeStats();
+      };
+   }
+   this.outputNoticeTimer = null;
+   if (typeof Timer !== "undefined") {
+      this.outputNoticeTimer = new Timer;
+      this.outputNoticeTimer.interval = 4.0;
+      this.outputNoticeTimer.periodic = false;
+      this.outputNoticeTimer.dialog = this;
+      this.outputNoticeTimer.onTimeout = function() {
+         if (this.dialog.outputNoticeMode === "toast")
+            this.dialog.clearOutputProgress();
       };
    }
    this.previewHoldTimer = null;
@@ -5261,7 +5301,7 @@ constructor() {
       g.brush = new Brush(ACM_GRAY_UI_THEME.header);
       g.fillRect(0, 0, this.width, this.height, g.brush);
       var mainTitle = "Astro Color Mixer";
-      var versionText = "v0.9.7.14-beta";
+      var versionText = "v0.9.7.19-beta";
       var compactHeader = dialog.layoutMode === "compact" || this.height < 60;
       var titleFont = new Font;
       titleFont.bold = true;
@@ -6259,10 +6299,13 @@ constructor() {
             g.drawLine(px, py - 4, px, py + 4);
          }
       }
+      this.dialog.drawPreviewOutputWaitPanel(g);
       g.end();
    };
    this.previewHost.onMousePress = function(x, y) {
       var dialog = this.dialog;
+      if (dialog.previewNoticeConsumesClick(x, y))
+         return;
       dialog.previewMouseDown = true;
       dialog.previewDragging = false;
       dialog.previewTempOriginal = false;
@@ -6277,6 +6320,8 @@ constructor() {
    };
    this.previewHost.onMouseMove = function(x, y) {
       var dialog = this.dialog;
+      if (dialog.outputNoticeMode === "blocking" && dialog.outputNoticeButtonRect)
+         return;
       if (!dialog.previewMouseDown)
          return;
       var dx = x - dialog.previewDragStartX;
@@ -6305,6 +6350,8 @@ constructor() {
    };
    this.previewHost.onMouseRelease = function(x, y) {
       var dialog = this.dialog;
+      if (dialog.previewNoticeConsumesClick(x, y))
+         return;
       if (dialog.previewHoldTimer)
          dialog.previewHoldTimer.stop();
       var wasDragging = dialog.previewDragging;
@@ -8323,7 +8370,10 @@ AstroColorMixerPOC8Dialog.prototype.refreshAvailableTargets = function(reloadCur
          this.previewStatusLabel.text = "Preview failed: no target RGB image";
          this.previewHost.update();
       }
-      this.setOutputFeedback("No eligible RGB images are currently open.");
+      this.showBlockingNotice(
+         "No eligible RGB images are currently open.",
+         "Open a nonlinear RGB image, then click Refresh."
+      );
       return;
    }
 
@@ -8841,7 +8891,7 @@ AstroColorMixerPOC8Dialog.prototype.shouldUseDetailCropPreview = function() {
       return false;
    if (this.previewTempCompare)
       return false;
-   if (this.previewZoomScale <= this.previewDetailThreshold)
+   if (this.previewZoomScale < this.previewDetailThreshold)
       return this.previewQualityMode === "detail";
    return true;
 };
@@ -10128,8 +10178,11 @@ AstroColorMixerPOC8Dialog.prototype.exportCurrentMask = function() {
       if (!(this.activeStatus && this.activeStatus.ok))
          fail("No target RGB image is available.");
 
-      this.setOutputFeedback("Creating full-resolution " + maskModeText + " image. Please wait for the completion message; PixInsight may look busy until it finishes. See PixInsight console for timings.", "#ffb13b", true);
-      acmFlushUi();
+      this.setOutputProgress(
+         "Creating full-resolution " + maskModeText + " image.",
+         "Please wait for the completion message; PixInsight may look busy until it finishes.",
+         "See PixInsight console for timings."
+      );
 
       console.noteln("Astro Color Mixer mask output started: Create " + maskModeText);
       var readStart = acmNowMs();
@@ -10162,8 +10215,13 @@ AstroColorMixerPOC8Dialog.prototype.exportCurrentMask = function() {
       console.noteln("Created mask image: " + outputWindow.mainView.id);
       var totalEnd = acmNowMs();
       console.noteln("Astro Color Mixer mask output complete in " + acmFormatElapsedSeconds(totalStart, totalEnd) + ".");
-      this.setOutputFeedback("Created full-resolution " + maskModeText + ": " + outputWindow.mainView.id + " (" + acmFormatElapsedSeconds(totalStart, totalEnd) + ")", "#7fe38a", true);
+      this.clearOutputProgress();
+      this.showCompletionNotice(
+         "Created full-resolution " + maskModeText + ".",
+         outputWindow.mainView.id + " (" + acmFormatElapsedSeconds(totalStart, totalEnd) + ")"
+      );
    } catch (error) {
+      this.clearOutputProgress();
       if (!(error && error.__acmHandled)) {
          var message = "Unexpected mask output failure: " + (error && error.message ? error.message : String(error));
          console.criticalln(message);
@@ -10441,12 +10499,174 @@ AstroColorMixerPOC8Dialog.prototype.setOutputFeedback = function(text, color, bo
       console.noteln(text);
 };
 
+AstroColorMixerPOC8Dialog.prototype.drawPreviewCentralMessagePanel = function(g, title, subtitle, detail) {
+   if (!g || !title)
+      return;
+   this.outputNoticeButtonRect = null;
+   var host = this.previewHost;
+   var hostWidth = host ? host.width : 0;
+   var hostHeight = host ? host.height : 0;
+   if (hostWidth < 80 || hostHeight < 60)
+      return;
+
+   var titleFont = new Font;
+   titleFont.pixelSize = ACM_HOST_IS_WINDOWS ? 16 : 15;
+   titleFont.bold = true;
+   var bodyFont = new Font;
+   bodyFont.pixelSize = ACM_HOST_IS_WINDOWS ? 13 : 12;
+   var buttonFont = new Font;
+   buttonFont.pixelSize = ACM_HOST_IS_WINDOWS ? 13 : 12;
+   buttonFont.bold = true;
+
+   var margin = ACM_HOST_IS_WINDOWS ? 20 : 18;
+   var maxPanelWidth = Math.max(120, hostWidth - margin * 2);
+   var preferredWidth = ACM_HOST_IS_WINDOWS ? 620 : 580;
+   var panelWidth = Math.min(maxPanelWidth, Math.max(260, preferredWidth));
+   var textWidth = panelWidth - margin * 2;
+
+   g.font = titleFont;
+   var clippedTitle = acmClipTextToWidth(title, g.font, textWidth);
+   g.font = bodyFont;
+   var bodyLinesText = acmWrapTextToWidth(subtitle || "", g.font, textWidth);
+   var detailLinesText = acmWrapTextToWidth(detail || "", g.font, textWidth);
+
+   var titleLineHeight = Math.max(20, titleFont.pixelSize + 7);
+   var bodyLineHeight = (bodyLinesText.length || detailLinesText.length) ? Math.max(17, bodyFont.pixelSize + 6) : 0;
+   var bodyLines = bodyLinesText.length + detailLinesText.length;
+   var hasButton = this.outputNoticeMode === "blocking";
+   var buttonHeight = hasButton ? (ACM_HOST_IS_WINDOWS ? 28 : 26) : 0;
+   var buttonGap = hasButton ? 12 : 0;
+   var panelHeight = margin + titleLineHeight + (bodyLines ? bodyLineHeight * bodyLines + 4 : 0) + buttonGap + buttonHeight + margin;
+   var x0 = Math.round((hostWidth - panelWidth) * 0.5);
+   var y0 = Math.round((hostHeight - panelHeight) * 0.5);
+   var x1 = x0 + panelWidth;
+   var y1 = y0 + panelHeight;
+   var accent = this.outputNoticeMode === "toast" ? 0xff7fe38a : 0xffffb13b;
+
+   g.brush = new Brush(0xd0202020);
+   g.fillRect(x0, y0, x1, y1, g.brush);
+   g.pen = new Pen(accent);
+   g.drawRect(new Rect(x0, y0, x1, y1));
+
+   g.font = titleFont;
+   g.pen = new Pen(accent);
+   var titleX = x0 + Math.round((panelWidth - g.font.width(clippedTitle)) * 0.5);
+   var titleY = y0 + margin + titleFont.pixelSize;
+   g.drawText(titleX, titleY, clippedTitle);
+
+   if (bodyLines) {
+      g.font = bodyFont;
+      g.pen = new Pen(0xfff2f2f2);
+      var bodyY = titleY + bodyLineHeight;
+      for (var lineIndex = 0; lineIndex < bodyLinesText.length; ++lineIndex) {
+         var bodyLine = bodyLinesText[lineIndex];
+         var bodyX = x0 + Math.round((panelWidth - g.font.width(bodyLine)) * 0.5);
+         g.drawText(bodyX, bodyY, bodyLine);
+         bodyY += bodyLineHeight;
+      }
+      for (var detailIndex = 0; detailIndex < detailLinesText.length; ++detailIndex) {
+         var detailLine = detailLinesText[detailIndex];
+         var detailX = x0 + Math.round((panelWidth - g.font.width(detailLine)) * 0.5);
+         g.drawText(detailX, bodyY, detailLine);
+         bodyY += bodyLineHeight;
+      }
+   }
+
+   if (hasButton) {
+      var buttonWidth = ACM_HOST_IS_WINDOWS ? 92 : 82;
+      var buttonX0 = Math.round((hostWidth - buttonWidth) * 0.5);
+      var buttonY0 = y1 - margin - buttonHeight;
+      var buttonX1 = buttonX0 + buttonWidth;
+      var buttonY1 = buttonY0 + buttonHeight;
+      this.outputNoticeButtonRect = new Rect(buttonX0, buttonY0, buttonX1, buttonY1);
+      g.brush = new Brush(0xffffc43a);
+      g.fillRect(buttonX0, buttonY0, buttonX1, buttonY1, g.brush);
+      g.pen = new Pen(0xff101010);
+      g.drawRect(this.outputNoticeButtonRect);
+      g.font = buttonFont;
+      var okText = "OK";
+      var okX = buttonX0 + Math.round((buttonWidth - g.font.width(okText)) * 0.5);
+      var okY = buttonY0 + Math.round((buttonHeight + buttonFont.pixelSize) * 0.5) - 2;
+      g.drawText(okX, okY, okText);
+   }
+};
+
+AstroColorMixerPOC8Dialog.prototype.drawPreviewOutputWaitPanel = function(g) {
+   if (!this.outputWaitTitle)
+      return;
+   this.drawPreviewCentralMessagePanel(g, this.outputWaitTitle, this.outputWaitSubtitle, this.outputWaitDetail);
+};
+
+AstroColorMixerPOC8Dialog.prototype.setCentralNotice = function(mode, title, subtitle, detail) {
+   this.outputNoticeMode = mode || "blocking";
+   this.outputWaitTitle = title || "";
+   this.outputWaitSubtitle = subtitle || "";
+   this.outputWaitDetail = detail || "";
+   this.outputNoticeButtonRect = null;
+   this.outputNoticeClickConsumed = false;
+   this.setOutputFeedback("");
+   if (title)
+      console.noteln(title + (subtitle ? " " + subtitle : "") + (detail ? " " + detail : ""));
+   if (this.previewHost)
+      this.previewHost.update();
+   if (this.outputNoticeTimer) {
+      this.outputNoticeTimer.stop();
+      if (this.outputNoticeMode === "toast")
+         this.outputNoticeTimer.start();
+   }
+   acmFlushUi();
+};
+
+AstroColorMixerPOC8Dialog.prototype.showBlockingNotice = function(title, subtitle, detail) {
+   this.setCentralNotice("blocking", title, subtitle, detail);
+};
+
+AstroColorMixerPOC8Dialog.prototype.showCompletionNotice = function(title, subtitle, detail) {
+   this.setCentralNotice("toast", title, subtitle, detail);
+};
+
+AstroColorMixerPOC8Dialog.prototype.setOutputProgress = function(title, subtitle, detail) {
+   this.setCentralNotice("progress", title, subtitle, detail);
+};
+
+AstroColorMixerPOC8Dialog.prototype.clearOutputProgress = function() {
+   if (!this.outputWaitTitle && !this.outputWaitSubtitle && !this.outputWaitDetail)
+      return;
+   this.outputWaitTitle = "";
+   this.outputWaitSubtitle = "";
+   this.outputWaitDetail = "";
+   this.outputNoticeMode = "";
+   this.outputNoticeButtonRect = null;
+   this.outputNoticeClickConsumed = false;
+   if (this.outputNoticeTimer)
+      this.outputNoticeTimer.stop();
+   if (this.previewHost)
+      this.previewHost.update();
+   acmFlushUi();
+};
+
+AstroColorMixerPOC8Dialog.prototype.previewNoticeConsumesClick = function(x, y) {
+   if (this.outputNoticeClickConsumed) {
+      this.outputNoticeClickConsumed = false;
+      return true;
+   }
+   if (this.outputNoticeMode !== "blocking" || !this.outputNoticeButtonRect)
+      return false;
+   if (x < this.outputNoticeButtonRect.x0 || x > this.outputNoticeButtonRect.x1 || y < this.outputNoticeButtonRect.y0 || y > this.outputNoticeButtonRect.y1)
+      return false;
+   this.outputNoticeClickConsumed = true;
+   this.clearOutputProgress();
+   return true;
+};
+
 AstroColorMixerPOC8Dialog.prototype.setLongOutputFeedback = function(actionName, enabledPassCount) {
    var passText = enabledPassCount + " enabled pass" + (enabledPassCount === 1 ? "" : "es");
    var caution = enabledPassCount >= 3 ? " This may take a while." : "";
-   var text = actionName + " full-resolution output (" + passText + ")." + caution + " Please wait for the completion message; PixInsight may show a busy cursor until processing finishes. See PixInsight console for timings.";
-   this.setOutputFeedback(text, "#ffb13b", true);
-   acmFlushUi();
+   this.setOutputProgress(
+      actionName + " full-resolution output (" + passText + ")." + caution,
+      "Please wait for the completion message; PixInsight may show a busy cursor until processing finishes.",
+      "See PixInsight console for timings."
+   );
 };
 
 AstroColorMixerPOC8Dialog.prototype.logOutputTiming = function(label, startMs, endMs) {
@@ -10510,10 +10730,15 @@ AstroColorMixerPOC8Dialog.prototype.applyRecipe = function() {
       console.noteln("Created output image: " + outputWindow.mainView.id);
       var totalEnd = acmNowMs();
       console.noteln("Astro Color Mixer output complete in " + acmFormatElapsedSeconds(totalStart, totalEnd) + ".");
-      this.setOutputFeedback("Created image: " + outputWindow.mainView.id + " (" + acmFormatElapsedSeconds(totalStart, totalEnd) + ")", "#7fe38a", true);
+      this.clearOutputProgress();
+      this.showCompletionNotice(
+         "Created image.",
+         outputWindow.mainView.id + " (" + acmFormatElapsedSeconds(totalStart, totalEnd) + ")"
+      );
       this.resetEditorStateAfterSuccessfulOutput();
       return true;
    } catch (error) {
+      this.clearOutputProgress();
       if (!(error && error.__acmHandled)) {
          var message = "Unexpected processing failure: " + (error && error.message ? error.message : String(error));
          console.criticalln(message);
@@ -10534,14 +10759,18 @@ AstroColorMixerPOC8Dialog.prototype.applyToTargetImage = function() {
       if (!this.confirmApplyToTarget())
          return false;
       if (!this.sourceView || !this.sourceView.viewId) {
-         this.setOutputFeedback("Target image is no longer available. Refresh the target image or use Create Image.");
-         showMessage("Target image is no longer available. Refresh the target image or use Create Image.", this.windowTitle, StdIcon_Warning);
+         this.showBlockingNotice(
+            "Target image is no longer available.",
+            "Refresh the target image or use Create Image."
+         );
          return false;
       }
       var targetInfo = acmFindViewForViewId(this.sourceView.viewId);
       if (!targetInfo || !targetInfo.view) {
-         this.setOutputFeedback("Target image is no longer available. Refresh the target image or use Create Image.");
-         showMessage("Target image is no longer available. Refresh the target image or use Create Image.", this.windowTitle, StdIcon_Warning);
+         this.showBlockingNotice(
+            "Target image is no longer available.",
+            "Refresh the target image or use Create Image."
+         );
          return false;
       }
 
@@ -10590,14 +10819,19 @@ AstroColorMixerPOC8Dialog.prototype.applyToTargetImage = function() {
          this.targetApplyMaskStatusLabel.text = maskInfo.message;
 
       var totalEnd = acmNowMs();
+      this.clearOutputProgress();
       if (maskInfo.respected)
-         this.setOutputFeedback(maskInfo.inverted
-            ? "Applied adjustments to target image using inverted PixInsight mask (" + acmFormatElapsedSeconds(totalStart, totalEnd) + ")."
-            : "Applied adjustments to target image using active PixInsight mask (" + acmFormatElapsedSeconds(totalStart, totalEnd) + ").",
-            "#7fe38a",
-            true);
+         this.showCompletionNotice(
+            maskInfo.inverted
+               ? "Applied adjustments using inverted PixInsight mask."
+               : "Applied adjustments using active PixInsight mask.",
+            acmFormatElapsedSeconds(totalStart, totalEnd)
+         );
       else
-         this.setOutputFeedback("Applied adjustments to target image (" + acmFormatElapsedSeconds(totalStart, totalEnd) + ").", "#7fe38a", true);
+         this.showCompletionNotice(
+            "Applied adjustments to target image.",
+            acmFormatElapsedSeconds(totalStart, totalEnd)
+         );
       console.noteln("Astro Color Mixer output complete in " + acmFormatElapsedSeconds(totalStart, totalEnd) + ".");
       this.resetEditorStateAfterSuccessfulOutput();
 
@@ -10607,6 +10841,7 @@ AstroColorMixerPOC8Dialog.prototype.applyToTargetImage = function() {
          this.markPreviewStale();
       return true;
    } catch (error) {
+      this.clearOutputProgress();
       if (!(error && error.__acmHandled)) {
          var message = "Target apply failed: " + (error && error.message ? error.message : String(error));
          console.criticalln(message);
@@ -10625,7 +10860,7 @@ try {
    if (!(error && error.__acmHandled)) {
       var message = "Unexpected dialog failure: " + (error && error.message ? error.message : String(error));
       console.criticalln(message);
-      showMessage(message, "Astro Color Mixer v0.9.7.14-beta", StdIcon_Error);
+      showMessage(message, "Astro Color Mixer v0.9.7.19-beta", StdIcon_Error);
    }
 }
 

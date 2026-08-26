@@ -9,37 +9,37 @@
   <platform os="all" arch="noarch" version="1.8.0:1.9.9">
 
     <package
-      fileName="AstroColorMixer-0.9.7.14-beta.zip"
-      sha1="3a03a72b5130b058593eacb27a3329c58141b9dc"
+      fileName="AstroColorMixer-0.9.7.19-beta.zip"
+      sha1="d1da7abe699f9e6054103df8dd66479997ab1475"
       type="script"
-      releaseDate="20260727"
+      releaseDate="20260826"
       remove="src/scripts/CosgrovesCosmos/AstroColorMixer.js">
 
-      <title>Astro Color Mixer v0.9.7.14-beta</title>
+      <title>Astro Color Mixer v0.9.7.19-beta</title>
 
       <description>
         <p>Astro Color Mixer is a PixInsight script for nonlinear RGB color and luminance refinement in astrophotography.</p>
-        <p><b>What's new:</b> Restores the Astro Color Mixer script menu icon using the validated colon feature-id plus flat SVG script icon package.</p>
+        <p><b>What's new:</b> Makes preview zoom transitions smoother at 4x and higher, so 6x continues zooming in naturally after 4x. Full-resolution output progress, completion, and key output warnings now appear as centered preview notices that are easier to see while processing.</p>
         <p>The installed script declares #feature-id AstroColorMixer : Cosgrove's Cosmos &gt; Astro Color Mixer and #feature-icon @script_icons_dir/AstroColorMixer.svg.</p>
-        <p>Processing math, masks, probe behavior, histogram and polar plot math, recipes, preview behavior, passes, layout target sizes, output behavior, and the display scaling warning from v0.9.7.11-beta are unchanged.</p>
+        <p>Processing math, masks, probe behavior, histogram and polar plot math, recipes, passes, layout target sizes, output math, and the display scaling warning are unchanged.</p>
         <p>This is a beta release for testing. PixInsight 1.9.4 or newer is recommended; Apple Silicon Mac users should use the ARM64/Apple-Silicon PixInsight build.</p>
       </description>
 
     </package>
 
     <package
-      fileName="AstroContrastEnhancer-0.9.600.zip"
-      sha1="5c188b2f10d9812e4cac1f1f0602e950bf11e8ba"
+      fileName="AstroContrastEnhancer-0.9.612.zip"
+      sha1="7bba1fcec4377466b3b8cfaa82ff3f1645dfe3bb"
       type="script"
-      releaseDate="20260802">
+      releaseDate="20260826">
 
-      <title>Astro Contrast Enhancer v0.9.600</title>
+      <title>Astro Contrast Enhancer v0.9.612</title>
 
       <description>
         <p>Astro Contrast Enhancer provides protected Texture, Clarity, Dehaze, and lasso-based local contrast control for stretched astrophotography images.</p>
-        <p><b>What's new:</b> Fixes low-zoom preview refresh and Before/After state handling after rapid queued slider changes.</p>
+        <p><b>What's new:</b> Improves central message alignment on Windows so wait and status panels are better centered and easier to read.</p>
         <p>This release includes the Cosgrove's Cosmos Non-Commercial Source License. Personal, educational, research, and other non-commercial use is permitted with attribution. Commercial use requires prior written permission from Patrick A. Cosgrove.</p>
-        <p>This release changes ACE state-machine behavior only. It does not change PixInsight package paths, feature-id, menu placement, or icon path.</p>
+        <p>This release keeps the existing ACE processing behavior and PixInsight package paths, feature-id, menu placement, and flat SVG icon path.</p>
       </description>
 
     </package>
