@@ -29,7 +29,7 @@
 
     <package
       fileName="AstroContrastEnhancer-0.9.612.zip"
-      sha1="7bba1fcec4377466b3b8cfaa82ff3f1645dfe3bb"
+      sha1="ac5803023da521eb7ccc2c3103877a13143c3017"
       type="script"
       releaseDate="20260826">
 
@@ -37,7 +37,7 @@
 
       <description>
         <p>Astro Contrast Enhancer provides protected Texture, Clarity, Dehaze, and lasso-based local contrast control for stretched astrophotography images.</p>
-        <p><b>What's new:</b> Improves central message alignment on Windows so wait and status panels are better centered and easier to read.</p>
+        <p><b>What's new:</b> Fixes Save Screen Sizes so ACE can reliably remember the window size and position you choose for future launches.</p>
         <p>This release includes the Cosgrove's Cosmos Non-Commercial Source License. Personal, educational, research, and other non-commercial use is permitted with attribution. Commercial use requires prior written permission from Patrick A. Cosgrove.</p>
         <p>This release keeps the existing ACE processing behavior and PixInsight package paths, feature-id, menu placement, and flat SVG icon path.</p>
       </description>

@@ -1,7 +1,7 @@
 #engine v8
 
 #feature-id    AstroContrastEnhancer : Cosgrove's Cosmos > Astro Contrast Enhancer
-#feature-info  Astro Contrast Enhancer v0.9.612. Adjusts Windows central message alignment.
+#feature-info  Astro Contrast Enhancer v0.9.612. Fixes Save Screen Sizes.
 #feature-icon  @script_icons_dir/AstroContrastEnhancer.svg
 
 /*
